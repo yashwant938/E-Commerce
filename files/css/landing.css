@@ -1,0 +1,223 @@
+*{
+  box-sizing: border-box;
+}
+.container
+{
+display: grid;
+height: 100vh;
+grid-template-columns: 1fr 1fr;
+position: relative;
+}
+body,html{
+  margin: 0;
+  padding: 0px;
+  font-family: sans-serif;
+}
+a {
+  color: #bf294c;
+  text-decoration: none;
+  background-color: transparent;
+}
+.row2
+{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.slider-wrapper
+{
+  position: relative;
+  max-width: 100%;
+  margin:0 auto;
+}
+.slider
+{
+  display: flex;
+  aspect-ratio: 16/9;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  border-radius: 0.5rem;
+}
+.slider img{
+  flex: 1 0 100%;
+  scroll-snap-align: start;
+  object-fit: cover;
+}
+.slider-nav
+{
+  display: flex;
+  column-gap: 1rem;
+  position: absolute;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+.slider-nav a
+{
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: #fff;
+  opacity:0.75;
+  transition: opacity ease 250ms;
+}
+.slider-nav a:hover{
+  opacity: 1;
+}
+.row2 img {
+  width: 100%; 
+  height: 100vh; 
+}
+.row1{
+  position: relative;
+}
+.container >.nav{
+  position: absolute;
+  display: inline;
+  z-index: 1;
+  left: 0.3rem;
+  top: 82%;
+  color: #bf294c;
+  opacity: 0.6;
+  flex-direction:column;
+}
+.nav button{
+  font-size: 25px;
+  padding: 5px;
+}
+.nav > img{
+  width: 1rem;
+  height: 1rem;
+}
+.card {
+  position: absolute;
+  width: 400px;
+  background-color: rgba(255, 255, 255,1);
+  padding: 20px;
+  border-radius: 5px;
+  border-top: 1px solid #7C81AD;
+  backdrop-filter: blur(2px);
+  border: 1px solid #ccc; 
+}
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+input {
+  padding: 10px;
+  border: none;
+  background-color: transparent;
+  border-bottom: 1px solid #ccc;
+  color: #bf294c;
+}
+.button-up,
+.button-down {
+  position: relative;
+  padding: 5px;
+  margin: 30px auto;
+  height: 66px;
+  width: 54px;
+  border-radius: 25%;
+  transition: all 0.2s linear;
+}
+.button-up::after,
+.button-down::after {
+  content: "";
+  position: absolute;
+  left: 11px;
+  z-index: 11;
+  display: block;
+  width: 25px;
+  height: 25px;
+  border-top: 5px solid #bf294c;
+  border-left: 5px solid #bf294c;
+}
+.button-up::after {
+  top: 20px;
+  transform: rotate(45deg);
+}
+
+.button-down::after {
+  top: 10px;
+  transform: rotate(225deg);
+}
+
+.buttons {
+  display: grid;
+  justify-content: normal;
+  gap: 10px
+}
+
+.login-button {
+  padding: 10px 20px;
+  background-color: #bf294c;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.login-button:hover {
+  animation-duration: 0.1;
+  background-color: #690d24; /* Background color on hover */
+}
+
+.register-button {
+  padding: 10px 20px;
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ffffff;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  text-align: center;
+  font-size: 12px;
+}
+.register-button:hover{
+  animation-duration: 0.1;
+  background-color: #dddddd;
+}
+.forgot-pass
+{
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  border: 50%;
+}
+.forgot-pass > a {
+/*  color: rgb(255, 255, 255);*/
+  text-decoration: none;
+  font-family: sans-serif;
+  position: relative;
+  transition: text-decoration 0.3s ease;
+}
+.forgot-pass > a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .card {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+main{
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+.slide{
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  transition: 1s;
+}
+.signup
+{
+text-decoration: none;
+}
