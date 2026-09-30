@@ -1,92 +1,101 @@
-# FCS
+# Property Marketplace
 
+A PHP/Slim property marketplace prototype with MySQL persistence, account workflows, listing filters, Razorpay integration and PDF contracts.
 
+## Why this project exists
 
-## Getting started
+Property transactions connect several backend concerns: account state, searchable listings, ownership, payment records and generated documents. This project brings those workflows into a server-rendered application with separate user and admin interfaces.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+**Status:** prototype requiring security and setup remediation. The repository name is `E-Commerce`, but the application handles property listings. External identity verification is stubbed, and the presence of security-related code does not establish a secure deployment.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Architecture
 
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
+```mermaid
+flowchart LR
+    Browser[Browser / HTML forms] --> Routes[Slim routes and PHP views]
+    Routes --> Accounts[User / admin data access]
+    Routes --> Properties[Property / payment data access]
+    Accounts --> DB[(MySQL / PDO)]
+    Properties --> DB
+    Routes --> Email[PHPMailer / email OTP]
+    Routes --> Payment[Razorpay order and signature APIs]
+    Routes --> PDF[TCPDF / PDF parser]
+    Routes --> Files[Local document and image storage]
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/cyb3rc1ph3r/FCS.git
-git branch -M main
-git push -uf origin main
+
+[index.php](index.php) configures routing and rendering. [User routes](routes/user.php) and [property routes](routes/property.php) coordinate workflows; [data-access classes](api/classes) use PDO. Most routes return rendered HTML or form redirects, with some JSON responses.
+
+## Engineering Highlights
+
+- Property listing creation, editing, filtering and ownership-related views.
+- Registration/login with password hashing, PHP sessions, email OTP and password-reset flows.
+- Separate admin pages for user status and property administration.
+- Razorpay order creation and payment-signature verification code, with payment records stored in MySQL.
+- PDF contract generation and an experimental document-integrity check.
+
+These are implemented code paths, not claims of independently validated security, live payment operation or production scale.
+
+## Tech Stack
+
+| Area | Technologies |
+| --- | --- |
+| Application | PHP, Slim 4, PHP-DI, PHP views |
+| Persistence | MySQL, PDO |
+| Browser | HTML/CSS, JavaScript, jQuery, Materialize |
+| Integration | PHPMailer, Razorpay PHP SDK |
+| Documents | TCPDF, Smalot PDF parser |
+
+## How It Works
+
+1. Account routes create users, compare password hashes, maintain session state and support email verification/reset workflows.
+2. Listings store price, location, availability, property type, amenities and ownership information. Browser filters request matching properties from the backend.
+3. The payment path creates a Razorpay order, checks the returned signature, records status and updates the property's buyer/sale state. These updates currently lack an atomic transaction and idempotency boundary.
+4. Eligible participants can request a generated PDF contract. A separate checker hashes extracted text and compares it with an encrypted embedded value. This is an experimental integrity mechanism, not a standard digital-signature implementation.
+5. The document-upload/KYC screens collect data, but external verification calls are disabled and success is forced. Do not treat this as verified identity or upload real identity documents.
+
+The schema includes users, sessions, email OTPs, admin accounts, properties, locations, amenities and payments. It mixes InnoDB and MyISAM tables and does not define foreign keys; relational integrity and payment consistency need further work.
+
+## Setup
+
+There is not yet a safe, reproducible one-command demo. Start with source review in an isolated local checkout:
+
+```bash
+git clone https://github.com/yashwant938/E-Commerce.git
+cd E-Commerce
+composer install
 ```
 
-## Integrate with your tools
+Composer is required; no PHP version or dependency lockfile is pinned. The existing schema uses MySQL 8 collation syntax. Apache with URL rewriting is expected.
 
-- [ ] [Set up project integrations](https://gitlab.com/cyb3rc1ph3r/FCS/-/settings/integrations)
+Before starting an HTTP server:
 
-## Collaborate with your team
+1. Replace credential literals in configuration/mail code with local environment configuration. Rotate any still-active exposed credentials. Do not reuse values from the repository.
+2. Prepare a schema-only database and synthetic demo fixtures. **Do not import the bundled account/payment records as demo identities or publish the SQL dump.**
+3. Correct authentication middleware so it rejects unauthorized requests **before** invoking route handlers. Validate this with automated tests.
+4. Make the front controller's `/FCS` base path and `.htaccess`'s `/fcs` rewrite path consistent. Configure local PDO access and writable upload directories using synthetic files only.
+5. Keep outbound email, payment and identity-service calls disabled for local review. A complete sandbox demo needs explicit mail capture, payment test adapters and clearly marked identity stubs; these are not currently supplied.
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+Do not expose this checkout publicly or submit real account, identity or payment data. No automated tests or verified end-to-end setup are included yet.
 
-## Test and Deploy
+## Example
 
-Use the built-in continuous integration in GitLab.
+A **target local test scenario after the setup gaps are addressed** is: synthetic seller creates a listing → synthetic buyer filters by location/budget → a payment test adapter returns a successful result → backend records the result → both parties inspect a generated contract.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+The source contains the corresponding listing, payment and contract code paths. This walkthrough is not an instruction to make a real payment, and it has not been validated as a complete sandbox demo.
 
-***
+## Engineering Challenges
 
-# Editing this README
+- **Authorization order:** the current middleware invokes protected handlers before checking session/account state. Redirecting afterward cannot undo a route's side effects.
+- **Database safety:** some search-filter fragments are concatenated into SQL; input validation and parameter binding need to cover every filter.
+- **Transaction consistency:** payment and property updates occur separately, and the payment table uses MyISAM. Retries and concurrent purchases need explicit handling.
+- **Trust boundaries:** KYC is bypassed; upload handling, session settings, state-changing GET routes and the generic API helper's disabled TLS verification need remediation.
+- **Reproducibility:** committed configuration/data, ignored dependency locks and a template README have made the project harder to run and assess safely.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+## Future Improvements
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+- Add deny-first authorization middleware and tests for anonymous, inactive and unverified users.
+- Move secrets to environment configuration; replace stored records with schema migrations and synthetic fixtures.
+- Use bound query parameters, validate upload content and keep uploaded documents outside public web paths.
+- Model payments as explicit state transitions with order/property binding, idempotency, transactional storage and failure-path tests.
+- Replace placeholder identity checks and custom document integrity with suitable, reviewed mechanisms when the requirements are defined.
+- Pin runtime/dependencies and add an isolated demo, mail/payment test adapters, CI and setup verification before considering deployment or performance testing.
