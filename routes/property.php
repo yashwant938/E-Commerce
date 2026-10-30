@@ -313,7 +313,7 @@ $payment_json = [
 
     return $renderer->render($response, 'payment.php',['route'=>$app->getRouteCollector()->getRouteParser(),'propertyDetail'=>$propertyDetail,'payment_json'=>$payment_json,'csrf'=>$csrf]);
 
-})->setName('paymentPoperty')->add($authMiddleware);
+})->setName('paymentPoperty')->add($paymentDisabledMiddleware)->add($authMiddleware);
 
 $app->post('/property/{uid}/buy', function (Request $request, Response $response, $args) use ($app,$csrf){    
     $propertyId = $args['uid'];
@@ -380,7 +380,7 @@ $app->post('/property/{uid}/buy', function (Request $request, Response $response
     return $response->withHeader('Location', $app->getRouteCollector()->getRouteParser()->urlFor('viewPropertyDetails',array("uid"=>$propertyDetail["property_uid"])))->withStatus(302);
     
 
-})->setName('buyPoperty')->add($authMiddleware);
+})->setName('buyPoperty')->add($paymentDisabledMiddleware)->add($authMiddleware);
 
 $app->get('/property/{uid}/contract', function (Request $request, Response $response, $args) use ($app){    
     $propertyId = $args['uid'];

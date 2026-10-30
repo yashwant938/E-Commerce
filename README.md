@@ -1,12 +1,12 @@
 # Property Marketplace
 
-A PHP/Slim property marketplace prototype with MySQL persistence, account workflows, listing filters, Razorpay integration and PDF contracts.
+A PHP/Slim property marketplace prototype with MySQL persistence, account workflows, listing filters, disabled Razorpay payment routes and experimental PDF contracts.
 
 ## Why this project exists
 
 Property transactions connect several backend concerns: account state, searchable listings, ownership, payment records and generated documents. This project brings those workflows into a server-rendered application with separate user and admin interfaces.
 
-**Status:** prototype requiring security and setup remediation. The repository name is `E-Commerce`, but the application handles property listings. External identity verification is stubbed, and the presence of security-related code does not establish a secure deployment.
+**Status:** prototype requiring security and setup remediation. The repository name is `E-Commerce`, but the application handles property listings. External identity verification is stubbed. Real payment routes are disabled. The presence of security-related code does not establish a secure deployment.
 
 ## Architecture
 
@@ -18,7 +18,7 @@ flowchart LR
     Accounts --> DB[(MySQL / PDO)]
     Properties --> DB
     Routes --> Email[PHPMailer / email OTP]
-    Routes --> Payment[Razorpay order and signature APIs]
+    Routes -. disabled .-> Payment[Razorpay order and signature APIs]
     Routes --> PDF[TCPDF / PDF parser]
     Routes --> Files[Local document and image storage]
 ```
@@ -30,7 +30,7 @@ flowchart LR
 - Property listing creation, editing, filtering and ownership-related views.
 - Registration/login with password hashing, PHP sessions, email OTP and password-reset flows.
 - Separate admin pages for user status and property administration.
-- Razorpay order creation and payment-signature verification code, with payment records stored in MySQL.
+- Legacy Razorpay order and signature-verification code is retained for review, but both payment endpoints are disabled.
 - PDF contract generation and an experimental document-integrity check.
 
 These are implemented code paths, not claims of independently validated security, live payment operation or production scale.
@@ -49,7 +49,7 @@ These are implemented code paths, not claims of independently validated security
 
 1. Account routes create users, compare password hashes, maintain session state and support email verification/reset workflows.
 2. Listings store price, location, availability, property type, amenities and ownership information. Browser filters request matching properties from the backend.
-3. The payment path creates a Razorpay order, checks the returned signature, records status and updates the property's buyer/sale state. These updates currently lack an atomic transaction and idempotency boundary.
+3. Both payment routes return 503 before the payment handlers execute. The legacy code lacks atomic transactions, verified order/property binding, idempotency and reconciliation; it must not be enabled for real payments.
 4. Eligible participants can request a generated PDF contract. A separate checker hashes extracted text and compares it with an encrypted embedded value. This is an experimental integrity mechanism, not a standard digital-signature implementation.
 5. The document-upload/KYC screens collect data, but external verification calls are disabled and success is forced. Do not treat this as verified identity or upload real identity documents.
 
@@ -57,7 +57,9 @@ The schema includes users, sessions, email OTPs, admin accounts, properties, loc
 
 ## Setup
 
-There is not yet a safe, reproducible one-command demo. Start with source review in an isolated local checkout:
+For a safe visual preview, open [`demo/index.html`](demo/index.html) locally in a browser. It uses only fictional listings and local assets; it is a standalone interface, not the PHP app, and does not create accounts, connect to services or process payments. Filter the listings using the type selector.
+
+For source review in an isolated checkout:
 
 ```bash
 git clone https://github.com/yashwant938/E-Commerce.git
@@ -71,11 +73,15 @@ Before starting an HTTP server:
 
 1. Replace credential literals in configuration/mail code with local environment configuration. Rotate any still-active exposed credentials. Do not reuse values from the repository.
 2. Prepare a schema-only database and synthetic demo fixtures. **Do not import the bundled account/payment records as demo identities or publish the SQL dump.**
-3. Correct authentication middleware so it rejects unauthorized requests **before** invoking route handlers. Validate this with automated tests.
+3. Keep all network integrations disabled. The protected-route authorization gate checks the current database account before dispatching; the narrow regression checks below do not establish that the rest of the application is secure.
 4. Make the front controller's `/FCS` base path and `.htaccess`'s `/fcs` rewrite path consistent. Configure local PDO access and writable upload directories using synthetic files only.
-5. Keep outbound email, payment and identity-service calls disabled for local review. A complete sandbox demo needs explicit mail capture, payment test adapters and clearly marked identity stubs; these are not currently supplied.
+5. Keep outbound email, payment and identity-service calls disabled for local review. A full application sandbox still needs explicit mail capture, payment test adapters and clearly marked identity stubs; the standalone preview does not exercise those integrations.
 
-Do not expose this checkout publicly or submit real account, identity or payment data. No automated tests or verified end-to-end setup are included yet.
+Do not expose this checkout publicly or submit real account, identity or payment data. There is no verified end-to-end setup or database/payment integration test suite yet.
+
+## Checks
+
+Run `php tests/security_test.php` with PHP CLI. It exercises deny-before-dispatch for invalid, inactive, unverified and missing users, database errors, and parameterized listing-filter construction including injection-shaped input. The tests do not connect to MySQL or verify payment behavior. PHP syntax checks can be run with `php -l` on changed PHP files. The standalone demo requires only a browser.
 
 ## Example
 
@@ -85,17 +91,16 @@ The source contains the corresponding listing, payment and contract code paths. 
 
 ## Engineering Challenges
 
-- **Authorization order:** the current middleware invokes protected handlers before checking session/account state. Redirecting afterward cannot undo a route's side effects.
-- **Database safety:** some search-filter fragments are concatenated into SQL; input validation and parameter binding need to cover every filter.
-- **Transaction consistency:** payment and property updates occur separately, and the payment table uses MyISAM. Retries and concurrent purchases need explicit handling.
+- **Authorization:** protected handlers now run only after the current account is checked; other routes, admin flows, sessions and object-level access still need an independent review.
+- **Database safety:** the main listing search binds filter values and rejects malformed IDs. Its amenity matching is still substring-based, and the rest of the application needs a comprehensive query audit and MySQL integration tests.
+- **Transaction consistency:** payment and property updates in the legacy code are separate, and the payment table uses MyISAM. Payment endpoints are disabled until order binding, transactions, retries and concurrency are implemented and tested.
 - **Trust boundaries:** KYC is bypassed; upload handling, session settings, state-changing GET routes and the generic API helper's disabled TLS verification need remediation.
 - **Reproducibility:** committed configuration/data, ignored dependency locks and a template README have made the project harder to run and assess safely.
 
 ## Future Improvements
 
-- Add deny-first authorization middleware and tests for anonymous, inactive and unverified users.
 - Move secrets to environment configuration; replace stored records with schema migrations and synthetic fixtures.
-- Use bound query parameters, validate upload content and keep uploaded documents outside public web paths.
+- Audit all remaining queries and authorization paths; validate uploads and keep documents outside public web paths.
 - Model payments as explicit state transitions with order/property binding, idempotency, transactional storage and failure-path tests.
 - Replace placeholder identity checks and custom document integrity with suitable, reviewed mechanisms when the requirements are defined.
-- Pin runtime/dependencies and add an isolated demo, mail/payment test adapters, CI and setup verification before considering deployment or performance testing.
+- Pin runtime/dependencies and add a full-app isolated sandbox, mail/payment test adapters, CI and setup verification before considering deployment or performance testing.

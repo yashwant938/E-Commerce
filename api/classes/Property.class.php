@@ -70,48 +70,18 @@ class Property
         return false;
     }
     
-    public static function fetchAllProperty($user_id,$type,$min_budget,$max_budget,$avi_date,$location_arr,$amenity_arr,$search){        
-        $db = self::$db;
-        try{          
-//            $sql="SELECT * FROM property WHERE created_by != :user_id AND isSold=0";
-            $sql="SELECT p.*, 
-            l.location_name AS `location`, 
-            p.location AS location_id
-            FROM property p
-            LEFT JOIN locations l ON l.location_id = p.location 
-            WHERE p.location IN (".implode(',', $location_arr).") 
-            AND (p.amenity LIKE '%".implode("%' OR p.amenity LIKE '%", $amenity_arr)."%' )
-            AND (p.property_type IN (".implode(',', $type).") )
-            AND (DATE(p.available_from) <= :avi_date )
-            AND ((p.price >= :min_budget OR :min_budget='') AND (p.price <= :max_budget OR :max_budget='')) 
-            AND (p.address LIKE :search)
-            AND p.isActive=1
-            ORDER BY p.property_id DESC
-            ";
-            $stmt = $db->prepare($sql);
-/*
-            $params=array(
-                'user_id' => $user_id
-            );
-            */
-            $params=array(
-                'search'=>"%".$search."%",
-                'avi_date'=>$avi_date,
-                'min_budget'=>$min_budget,
-                'max_budget'=>$max_budget,
-            );
-          //  echo PdoDebugger::show($sql,$params);
-            $stmt->execute($params);
+    public static function fetchAllProperty($user_id, $type, $min_budget, $max_budget, $avi_date, $location_arr, $amenity_arr, $search) {
+        require_once __DIR__ . '/PropertySearch.php';
+        $query = buildPropertySearch($type, $min_budget, $max_budget, $avi_date, $location_arr, $amenity_arr, $search);
+        if ($query === false) return false;
+        try {
+            $stmt = self::$db->prepare($query[0]);
+            $stmt->execute($query[1]);
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-			if($result){
-				return $result;
-			}
-
-        }
-        catch(PDOException $e){
+            return $result ?: false;
+        } catch (PDOException $e) {
             return false;
         }
-        return false;
     }
     public static function fetchAllAdminProperty(){        
         $db = self::$db;

@@ -60,7 +60,7 @@ if(!defined('app')) {
 
             </div>
             <div class="mt-4">
-                <a href="#" data-bs-toggle="modal" data-bs-target="#buyModal" class="btn btn-dark btn-block">Buy/Rent</a>
+                <p class="text-muted">Payments are disabled in this prototype.</p>
             </div>
             <?php }else{ ?>
                 <div class="alert alert-warning" role="alert">
@@ -98,7 +98,7 @@ if(!defined('app')) {
         <li>User Identification</li>
         <li>Title deeds</li>
     </ul>
-    <li>Service is not liable for seller-buyer disputes. Our service guarantees secure transactions.</li>
+    <li>Service is not liable for seller-buyer disputes. Payments are disabled in this prototype.</li>
     <p>The site is a platform for buyers and sellers to connect and transact. The site is not liable for any disputes between buyers and sellers after a transaction has been completed.</p>
     <li>Legal action for using fake documents</li>
     <p>The site has a zero-tolerance policy for the use of fake documents. If a user is found to have uploaded fake documents, the site may take legal action against the user.</p>
@@ -120,7 +120,7 @@ if(!defined('app')) {
         
 
 
-        <button type="submit" class="btn btn-dark">Buy/Rent</button>
+        <p class="text-muted">Payments are disabled in this prototype.</p>
       </div>
 </form>
 

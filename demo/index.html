@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Property marketplace · Synthetic demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="wrap top"><a class="brand" href="#top">FIELD<span> / </span>HOUSE</a><span class="badge">SYNTHETIC DEMO</span></div>
+  </header>
+  <main id="top" class="wrap">
+    <div class="intro"><p class="eyebrow">A PROPERTY MARKETPLACE PROTOTYPE</p><h1>Find a place<br><em>to call yours.</em></h1>
+      <p>Explore a small collection of fictional listings. This standalone preview uses no accounts, payments, uploads, or network services.</p></div>
+    <section class="listing-section" aria-labelledby="listings-title">
+      <div class="section-top"><div><p class="eyebrow">EXPLORE</p><h2 id="listings-title">A few places to start</h2></div><label>Filter by type<select id="type"><option value="all">All properties</option><option value="sale">For sale</option><option value="rent">For rent</option></select></label></div>
+      <p id="count" class="count" aria-live="polite">3 fictional listings</p>
+      <div class="grid" id="listings">
+        <article data-type="sale"><div class="art art-one"><span>01</span><div class="house"></div></div><div class="card"><p class="eyebrow">FOR SALE · FICTIONAL</p><h3>Willow House</h3><p>North Quarter · 3 beds</p><strong>₹ 72,00,000</strong></div></article>
+        <article data-type="rent"><div class="art art-two"><span>02</span><div class="house"></div></div><div class="card"><p class="eyebrow">FOR RENT · FICTIONAL</p><h3>Parkside Studio</h3><p>Garden District · 1 bed</p><strong>₹ 18,000 <small>/ month</small></strong></div></article>
+        <article data-type="sale"><div class="art art-three"><span>03</span><div class="house"></div></div><div class="card"><p class="eyebrow">FOR SALE · FICTIONAL</p><h3>Terrace Residence</h3><p>Lake Quarter · 2 beds</p><strong>₹ 54,00,000</strong></div></article>
+      </div>
+    </section>
+  </main>
+  <footer class="wrap">A standalone local preview with invented data. It does not demonstrate verified security or real transactions.</footer>
+  <script src="demo.js"></script>
+</body>
+</html>

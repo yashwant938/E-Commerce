@@ -17,6 +17,7 @@ use Slim\Views\PhpRenderer;
 use DI\Container;
 
 require __DIR__ . '/api/autoload/init.php';
+require_once __DIR__ . '/api/classes/AuthorizationGate.php';
 require __DIR__ . '/vendor/autoload.php';
 
 require __DIR__ . '/files/include/php-csrf.php';
@@ -47,36 +48,26 @@ $app->addBodyParsingMiddleware();
 $app->addRoutingMiddleware();
 
 
-$authMiddleware = function (Request $request, RequestHandler $handler) use ($app){
-    $response = $handler->handle($request);
-    if (!isset($_SESSION['isLoggedIn'])) {
+$authMiddleware = function (Request $request, RequestHandler $handler) use ($app) {
+    $loadUser = function ($userId) {
+        $db = Database::getInstance();
+        User::constructStatic($db);
+        return User::fetchUser($userId);
+    };
+    $redirect = function ($route) use ($app) {
         $response = new Psr7Response();
-        return $response->withHeader('Location', $app->getRouteCollector()->getRouteParser()->urlFor('home'))->withStatus(302);
-    }
-    
-    $db = Database::getInstance();
-    User::constructStatic($db);
-    $user = User::fetchUser($_SESSION["userId"]); 
-    if($user["isActive"]==0){
-        $_SESSION['isActive']=0;
-    }else{
-        $_SESSION['isActive']=1;
-    }
-    if ($_SESSION['isActive']==0) {
-        $response = new Psr7Response();
-        return $response->withHeader('Location', $app->getRouteCollector()->getRouteParser()->urlFor('home'))->withStatus(302);
-    }
-    elseif($_SESSION['isEmailVerified']==0){
-        $response = new Psr7Response();
-        return $response->withHeader('Location', $app->getRouteCollector()->getRouteParser()->urlFor('verifyEmailForm'))->withStatus(302);
-    }
-    elseif($_SESSION["isKYC"]==0){
-        $response = new Psr7Response();
-        return $response->withHeader('Location', $app->getRouteCollector()->getRouteParser()->urlFor('ekyc'))->withStatus(302);
-    }
-    return $response;
+        return $response->withHeader('Location', $app->getRouteCollector()->getRouteParser()->urlFor($route))->withStatus(302);
+    };
+    return dispatchAuthorized($request, $handler, $_SESSION, $loadUser, $redirect);
 };
 
+// Payment routes are deliberately unavailable until order binding, atomic
+// transactions, retries, and reconciliation have been implemented and tested.
+$paymentDisabledMiddleware = function (Request $request, RequestHandler $handler) {
+    $response = new Psr7Response();
+    $response->getBody()->write('Payments are disabled in this prototype.');
+    return $response->withHeader('Content-Type', 'text/plain; charset=utf-8')->withStatus(503);
+};
 
 
 $app->get('/', function (Request $request, Response $response) use ($app,$csrf){    
