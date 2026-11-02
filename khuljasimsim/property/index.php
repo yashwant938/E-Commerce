@@ -1,5 +1,6 @@
 <?php
 require_once "../../files/include/auth.php";
+require_once __DIR__ . "/../../files/include/admin-action.php";
 require_once "../../api/autoload/init.php";
 
 define('app', TRUE);
@@ -91,11 +92,11 @@ $properties = Property::fetchAllAdminProperty();
             <tr>
                 <td class="text-center"><?php echo $count; $count++; ?></td>
                 <td>
-                <?php if($property['isActive']==1){ ?>
-                    <a class='waves-effect waves-light btn-small delete' href="remove.php?pid=<?php echo $property['property_id']; ?>">Remove</a>
-                    <?php }else{ ?>
-                    <a class='waves-effect waves-light btn-small edit' href="remove.php?pid=<?php echo $property['property_id']; ?>">Active</a>
-                    <?php } ?>
+                    <form method="post" action="remove.php">
+                        <input type="hidden" name="pid" value="<?php echo (int) $property['property_id']; ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo adminActionToken('property-status', (int) $property['property_id']); ?>">
+                        <button type="submit" class="waves-effect waves-light btn-small <?php echo $property['isActive']==1 ? 'delete' : 'edit'; ?>"><?php echo $property['isActive']==1 ? 'Remove' : 'Active'; ?></button>
+                    </form>
                 </td> 
 
                 <td><?php echo Functions::filterInput($property['owner_name']); ?></td>

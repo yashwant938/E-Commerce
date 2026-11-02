@@ -83,6 +83,8 @@ Do not expose this checkout publicly or submit real account, identity or payment
 
 Run `php tests/security_test.php` with PHP CLI. It exercises deny-before-dispatch for invalid, inactive, unverified and missing users, database errors, and parameterized listing-filter construction including injection-shaped input. The tests do not connect to MySQL or verify payment behavior. PHP syntax checks can be run with `php -l` on changed PHP files. The standalone demo requires only a browser.
 
+Run `python3 -m unittest discover -s tests -p 'test_admin_actions.py' -v` with Python 3 and PHP CLI for the admin-action HTTP regressions. They start a loopback-only PHP server in a disposable fixture, exercise the real admin forms/auth guard/handlers, and replace only database/bootstrap dependencies with synthetic doubles. Set `ADMIN_TEST_PHP` if PHP is not on PATH. The suite checks rejected GET/HEAD/OPTIONS requests, anonymous sessions, malformed IDs, missing/invalid/cross-session/action/record tokens, and authorized form submissions. Admin status changes now require POST with a session-bound, action-and-record-specific token and redirect with 303.
+
 ## Example
 
 A **target local test scenario after the setup gaps are addressed** is: synthetic seller creates a listing → synthetic buyer filters by location/budget → a payment test adapter returns a successful result → backend records the result → both parties inspect a generated contract.
@@ -94,7 +96,7 @@ The source contains the corresponding listing, payment and contract code paths. 
 - **Authorization:** protected handlers now run only after the current account is checked; other routes, admin flows, sessions and object-level access still need an independent review.
 - **Database safety:** the main listing search binds filter values and rejects malformed IDs. Its amenity matching is still substring-based, and the rest of the application needs a comprehensive query audit and MySQL integration tests.
 - **Transaction consistency:** payment and property updates in the legacy code are separate, and the payment table uses MyISAM. Payment endpoints are disabled until order binding, transactions, retries and concurrency are implemented and tested.
-- **Trust boundaries:** KYC is bypassed; upload handling, session settings, state-changing GET routes and the generic API helper's disabled TLS verification need remediation.
+- **Trust boundaries:** KYC is bypassed; upload handling, session settings, other state-changing GET routes and the generic API helper's disabled TLS verification need remediation. The two standalone admin status-change endpoints now reject GET and require protected POST forms.
 - **Reproducibility:** committed configuration/data, ignored dependency locks and a template README have made the project harder to run and assess safely.
 
 ## Future Improvements

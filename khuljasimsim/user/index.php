@@ -1,5 +1,6 @@
 <?php
 require_once "../../files/include/auth.php";
+require_once __DIR__ . "/../../files/include/admin-action.php";
 require_once "../../api/autoload/init.php";
 
 define('app', TRUE);
@@ -84,11 +85,11 @@ $users = User::fetchAllUserWithAuth();
                 <td><?php echo Functions::filterInput($user['user_ip']); ?></td> 
                 <td><?php echo Functions::filterInput(Functions::date_time_disp_format($user['loggedin_on'])); ?></td> 
                 <td>
-                <?php if($user['isActive']==1){ ?>
-                    <a class='waves-effect waves-light btn-small delete' href="changeStatus.php?user_id=<?php echo $user['user_id']; ?>">Disable</a>
-                    <?php }else{ ?>
-                    <a class='waves-effect waves-light btn-small edit' href="changeStatus.php?user_id=<?php echo $user['user_id']; ?>">Enable</a>
-                    <?php } ?>
+                    <form method="post" action="changeStatus.php">
+                        <input type="hidden" name="user_id" value="<?php echo (int) $user['user_id']; ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo adminActionToken('user-status', (int) $user['user_id']); ?>">
+                        <button type="submit" class="waves-effect waves-light btn-small <?php echo $user['isActive']==1 ? 'delete' : 'edit'; ?>"><?php echo $user['isActive']==1 ? 'Disable' : 'Enable'; ?></button>
+                    </form>
                 </td>                    
             </tr>
             <?php } } ?>
