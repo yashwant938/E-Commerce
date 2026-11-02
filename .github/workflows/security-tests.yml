@@ -1,0 +1,22 @@
+name: Security regressions
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check PHP syntax
+        run: find api files/include khuljasimsim tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Exercise authorization and query regressions
+        run: php tests/security_test.php
+      - name: Exercise admin HTTP regressions with synthetic data
+        run: python3 -m unittest discover -s tests -p 'test_admin_actions.py' -v
